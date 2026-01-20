@@ -1,9 +1,10 @@
-import { z } from 'zod';
-import { insertEngineSchema, engines, transactions, forecasts, actions, alerts } from './schema';
+import { z } from "zod";
+import { engines, transactions, forecasts, actions, alerts } from "./schema";
 
-// ============================================
-// SHARED ERROR SCHEMAS
-// ============================================
+// =============================================================================
+// ERROR SCHEMAS
+// =============================================================================
+
 export const errorSchemas = {
   validation: z.object({
     message: z.string(),
@@ -17,14 +18,15 @@ export const errorSchemas = {
   }),
 };
 
-// ============================================
-// API CONTRACT
-// ============================================
+// =============================================================================
+// API CONTRACT DEFINITIONS
+// =============================================================================
+
 export const api = {
   dashboard: {
     get: {
-      method: 'GET' as const,
-      path: '/api/dashboard',
+      method: "GET" as const,
+      path: "/api/dashboard",
       responses: {
         200: z.object({
           engines: z.array(z.custom<typeof engines.$inferSelect>()),
@@ -38,15 +40,15 @@ export const api = {
   },
   engines: {
     list: {
-      method: 'GET' as const,
-      path: '/api/engines',
+      method: "GET" as const,
+      path: "/api/engines",
       responses: {
         200: z.array(z.custom<typeof engines.$inferSelect>()),
       },
     },
     get: {
-      method: 'GET' as const,
-      path: '/api/engines/:id',
+      method: "GET" as const,
+      path: "/api/engines/:id",
       responses: {
         200: z.custom<typeof engines.$inferSelect>(),
         404: errorSchemas.notFound,
@@ -55,8 +57,8 @@ export const api = {
   },
   actions: {
     execute: {
-      method: 'POST' as const,
-      path: '/api/actions/:id/execute',
+      method: "POST" as const,
+      path: "/api/actions/:id/execute",
       responses: {
         200: z.custom<typeof actions.$inferSelect>(),
         404: errorSchemas.notFound,
@@ -65,10 +67,17 @@ export const api = {
   },
 };
 
-// ============================================
+// =============================================================================
 // HELPER FUNCTIONS
-// ============================================
-export function buildUrl(path: string, params?: Record<string, string | number>): string {
+// =============================================================================
+
+/**
+ * Build URL with path parameters interpolated
+ */
+export function buildUrl(
+  path: string,
+  params?: Record<string, string | number>
+): string {
   let url = path;
   if (params) {
     Object.entries(params).forEach(([key, value]) => {
@@ -80,7 +89,11 @@ export function buildUrl(path: string, params?: Record<string, string | number>)
   return url;
 }
 
-// ============================================
-// TYPE HELPERS
-// ============================================
+// =============================================================================
+// TYPE EXPORTS
+// =============================================================================
+
 export type DashboardResponse = z.infer<typeof api.dashboard.get.responses[200]>;
+export type EnginesResponse = z.infer<typeof api.engines.list.responses[200]>;
+export type EngineResponse = z.infer<typeof api.engines.get.responses[200]>;
+export type ActionResponse = z.infer<typeof api.actions.execute.responses[200]>;

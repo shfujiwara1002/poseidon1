@@ -1,7 +1,83 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, buildUrl, DashboardResponse } from "@shared/routes";
+import type { Action } from "@shared/schema";
 
-// Mock data for when the backend is unavailable
+// =============================================================================
+// MOCK DATA - Used when backend is unavailable (frontend-only development)
+// =============================================================================
+
+const merchants = [
+  { name: "Amazon", safe: true },
+  { name: "Spotify", safe: true },
+  { name: "Netflix", safe: true },
+  { name: "Uber Eats", safe: true },
+  { name: "Apple Store", safe: true },
+  { name: "Starbucks", safe: true },
+  { name: "Gas Station", safe: true },
+  { name: "Target", safe: true },
+  { name: "Walmart", safe: true },
+  { name: "Costco", safe: true },
+  { name: "Whole Foods", safe: true },
+  { name: "Home Depot", safe: true },
+  { name: "Best Buy", safe: true },
+  { name: "Walgreens", safe: true },
+  { name: "CVS Pharmacy", safe: true },
+  { name: "McDonald's", safe: true },
+  { name: "Chipotle", safe: true },
+  { name: "Gym Membership", safe: true },
+  { name: "Electric Bill", safe: true },
+  { name: "Phone Bill", safe: true },
+  { name: "Internet Bill", safe: true },
+  { name: "Water Bill", safe: true },
+  { name: "Insurance Payment", safe: true },
+  { name: "Gas Bill", safe: true },
+  { name: "Grocery Store", safe: true },
+  { name: "Restaurant - Downtown", safe: true },
+  { name: "Coffee Shop", safe: true },
+  { name: "Bookstore", safe: true },
+  { name: "Movie Theater", safe: true },
+  { name: "Parking Garage", safe: true },
+  { name: "Unknown Vendor", safe: false },
+  { name: "Foreign Transaction - Nigeria", safe: false },
+  { name: "Suspicious ATM Withdrawal", safe: false },
+  { name: "Online Casino", safe: false },
+  { name: "Crypto Exchange", safe: false },
+  { name: "Unusual Wire Transfer", safe: false },
+  { name: "Overseas Purchase - Russia", safe: false },
+  { name: "Night Club - 3AM", safe: false },
+  { name: "Pawn Shop", safe: false },
+  { name: "Unknown Online Store", safe: false },
+];
+
+function generateMockTransactions() {
+  const transactions = [];
+  const now = Date.now();
+  const dayMs = 86400000;
+
+  for (let i = 1; i <= 100; i++) {
+    const merchant = merchants[Math.floor(Math.random() * merchants.length)];
+    const isSuspicious = !merchant.safe;
+    const amount = isSuspicious
+      ? (Math.random() * 2000 + 100).toFixed(2)
+      : (Math.random() * 300 + 5).toFixed(2);
+    const riskScore = isSuspicious
+      ? Math.floor(Math.random() * 30 + 70)
+      : Math.floor(Math.random() * 20 + 1);
+    const daysAgo = Math.floor(Math.random() * 30);
+
+    transactions.push({
+      id: i,
+      merchant: merchant.name,
+      amount,
+      date: new Date(now - dayMs * daysAgo),
+      status: isSuspicious ? "suspicious" : "safe",
+      riskScore,
+    });
+  }
+
+  return transactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+}
+
 const mockDashboardData: DashboardResponse = {
   engines: [
     {
@@ -35,13 +111,7 @@ const mockDashboardData: DashboardResponse = {
       lastUpdated: new Date(),
     },
   ],
-  recentTransactions: [
-    { id: 1, merchant: "Amazon", amount: "142.50", date: new Date(), status: "safe", riskScore: 5 },
-    { id: 2, merchant: "Spotify", amount: "9.99", date: new Date(), status: "safe", riskScore: 2 },
-    { id: 3, merchant: "Unknown Vendor", amount: "299.00", date: new Date(), status: "suspicious", riskScore: 78 },
-    { id: 4, merchant: "Whole Foods", amount: "87.32", date: new Date(), status: "safe", riskScore: 3 },
-    { id: 5, merchant: "Netflix", amount: "15.99", date: new Date(), status: "safe", riskScore: 1 },
-  ],
+  recentTransactions: generateMockTransactions(),
   forecasts: [
     { id: 1, month: "Jan", actual: "45000", projected: "45000", lowerBound: "43000", upperBound: "47000" },
     { id: 2, month: "Feb", actual: "47200", projected: "47200", lowerBound: "45000", upperBound: "49400" },
@@ -61,7 +131,14 @@ const mockDashboardData: DashboardResponse = {
   ],
 };
 
-// GET /api/dashboard
+// =============================================================================
+// REACT QUERY HOOKS
+// =============================================================================
+
+/**
+ * GET /api/dashboard - Fetches aggregated dashboard data
+ * Falls back to mock data when backend is unavailable
+ */
 export function useDashboardData() {
   return useQuery({
     queryKey: [api.dashboard.get.path],
@@ -71,17 +148,17 @@ export function useDashboardData() {
         if (!res.ok) throw new Error("Failed to fetch dashboard data");
         return api.dashboard.get.responses[200].parse(await res.json());
       } catch {
-        // Return mock data when backend is unavailable
         console.info("Using mock dashboard data (backend unavailable)");
         return mockDashboardData;
       }
     },
-    // Refresh frequently for "live" feel
     refetchInterval: 5000,
   });
 }
 
-// GET /api/engines (Individual list if needed, though dashboard covers it)
+/**
+ * GET /api/engines - Fetches list of all engines
+ */
 export function useEngines() {
   return useQuery({
     queryKey: [api.engines.list.path],
@@ -93,26 +170,74 @@ export function useEngines() {
   });
 }
 
-// POST /api/actions/:id/execute
+/**
+ * POST /api/actions/:id/execute - Executes a pending action
+ * Uses optimistic updates and falls back to local state when backend is unavailable
+ */
 export function useExecuteAction() {
   const queryClient = useQueryClient();
+
   return useMutation({
-    mutationFn: async (id: number) => {
+    mutationFn: async (id: number): Promise<Action> => {
       const url = buildUrl(api.actions.execute.path, { id });
-      const res = await fetch(url, {
-        method: api.actions.execute.method,
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-      });
-      
-      if (!res.ok) {
-        if (res.status === 404) throw new Error("Action not found");
-        throw new Error("Failed to execute action");
+
+      try {
+        const res = await fetch(url, {
+          method: api.actions.execute.method,
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+        });
+
+        if (!res.ok) {
+          if (res.status === 404) throw new Error("Action not found");
+          throw new Error("Failed to execute action");
+        }
+        return api.actions.execute.responses[200].parse(await res.json());
+      } catch {
+        // Backend unavailable - simulate execution locally
+        console.info("Executing action locally (backend unavailable)");
+
+        // Get current data and find the action
+        const currentData = queryClient.getQueryData<DashboardResponse>([api.dashboard.get.path]);
+        const action = currentData?.pendingActions.find((a) => a.id === id);
+
+        if (!action) {
+          throw new Error("Action not found");
+        }
+
+        // Return the action with updated status
+        return { ...action, status: "executed" } as Action;
       }
-      return api.actions.execute.responses[200].parse(await res.json());
     },
-    onSuccess: () => {
-      // Invalidate dashboard to refresh pending actions list and engine status
+
+    // Optimistic update - immediately update UI before server responds
+    onMutate: async (id: number) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: [api.dashboard.get.path] });
+
+      // Snapshot previous value
+      const previousData = queryClient.getQueryData<DashboardResponse>([api.dashboard.get.path]);
+
+      // Optimistically update the cache
+      if (previousData) {
+        queryClient.setQueryData<DashboardResponse>([api.dashboard.get.path], {
+          ...previousData,
+          pendingActions: previousData.pendingActions.filter((a) => a.id !== id),
+        });
+      }
+
+      return { previousData };
+    },
+
+    // Rollback on error
+    onError: (_err, _id, context) => {
+      if (context?.previousData) {
+        queryClient.setQueryData([api.dashboard.get.path], context.previousData);
+      }
+    },
+
+    // Refetch after success or error
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: [api.dashboard.get.path] });
     },
   });

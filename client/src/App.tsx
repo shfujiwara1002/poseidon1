@@ -8,6 +8,7 @@ import Home from "@/pages/Home";
 import Dashboard from "@/pages/Dashboard";
 import Transactions from "@/pages/Transactions";
 import Forecast from "@/pages/Forecast";
+import Settings from "@/pages/Settings";
 
 function Router() {
   return (
@@ -16,6 +17,7 @@ function Router() {
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/transactions" component={Transactions} />
       <Route path="/forecast" component={Forecast} />
+      <Route path="/settings" component={Settings} />
       <Route component={NotFound} />
     </Switch>
   );

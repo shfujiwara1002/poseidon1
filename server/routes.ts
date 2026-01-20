@@ -7,45 +7,82 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+  // ==========================================================================
+  // GET /api/dashboard - Aggregated dashboard data
+  // ==========================================================================
+  app.get(api.dashboard.get.path, async (_req, res) => {
+    try {
+      const [engines, recentTransactions, forecasts, pendingActions, alerts] =
+        await Promise.all([
+          storage.getEngines(),
+          storage.getTransactions(),
+          storage.getForecasts(),
+          storage.getPendingActions(),
+          storage.getAlerts(),
+        ]);
 
-  app.get(api.dashboard.get.path, async (req, res) => {
-    const engines = await storage.getEngines();
-    const recentTransactions = await storage.getTransactions();
-    const forecasts = await storage.getForecasts();
-    const pendingActions = await storage.getPendingActions();
-    const alerts = await storage.getAlerts();
-
-    res.json({
-      engines,
-      recentTransactions,
-      forecasts,
-      pendingActions,
-      alerts
-    });
+      res.json({
+        engines,
+        recentTransactions,
+        forecasts,
+        pendingActions,
+        alerts,
+      });
+    } catch (error) {
+      console.error("Dashboard fetch error:", error);
+      res.status(500).json({ message: "Failed to fetch dashboard data" });
+    }
   });
 
-  app.get(api.engines.list.path, async (req, res) => {
-    const engines = await storage.getEngines();
-    res.json(engines);
+  // ==========================================================================
+  // GET /api/engines - List all engines
+  // ==========================================================================
+  app.get(api.engines.list.path, async (_req, res) => {
+    try {
+      const engines = await storage.getEngines();
+      res.json(engines);
+    } catch (error) {
+      console.error("Engines fetch error:", error);
+      res.status(500).json({ message: "Failed to fetch engines" });
+    }
   });
 
+  // ==========================================================================
+  // GET /api/engines/:id - Get single engine by ID
+  // ==========================================================================
   app.get(api.engines.get.path, async (req, res) => {
-    // In a real app this would find by ID, but we only have 3 engines
-    // so we can just return one for now or mock it if we wanted proper ID support
-    // For now returning the list is fine as the dashboard aggregates it
-    res.status(501).json({ message: "Not implemented for single engine yet" });
+    const id = parseInt(req.params.id);
+    try {
+      const engines = await storage.getEngines();
+      const engine = engines.find((e) => e.id === id);
+      if (!engine) {
+        return res.status(404).json({ message: "Engine not found" });
+      }
+      res.json(engine);
+    } catch (error) {
+      console.error("Engine fetch error:", error);
+      res.status(500).json({ message: "Failed to fetch engine" });
+    }
   });
 
+  // ==========================================================================
+  // POST /api/actions/:id/execute - Execute a pending action
+  // ==========================================================================
   app.post(api.actions.execute.path, async (req, res) => {
     const id = parseInt(req.params.id);
-    const updated = await storage.executeAction(id);
-    if (!updated) {
-      return res.status(404).json({ message: "Action not found" });
+    try {
+      const updated = await storage.executeAction(id);
+      if (!updated) {
+        return res.status(404).json({ message: "Action not found" });
+      }
+      res.json(updated);
+    } catch (error) {
+      console.error("Action execute error:", error);
+      res.status(500).json({ message: "Failed to execute action" });
     }
-    res.json(updated);
   });
 
-  // Seed data on startup
+  // Seed database on startup
   await storage.seedData();
 
   return httpServer;
