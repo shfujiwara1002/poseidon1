@@ -41,7 +41,7 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(transactions)
       .limit(10)
-      .orderBy(transactions.date);
+      .orderBy(transactions.timestamp);
   }
 
   async getForecasts(): Promise<Forecast[]> {
@@ -76,6 +76,7 @@ export class DatabaseStorage implements IStorage {
     await db.insert(engines).values([
       {
         name: "Protect",
+        type: "protect",
         status: "active",
         score: "0.02",
         metricLabel: "Threat Score",
@@ -84,6 +85,7 @@ export class DatabaseStorage implements IStorage {
       },
       {
         name: "Grow",
+        type: "grow",
         status: "active",
         score: "98.4",
         metricLabel: "Accuracy",
@@ -92,7 +94,8 @@ export class DatabaseStorage implements IStorage {
       },
       {
         name: "Optimize",
-        status: "optimizing",
+        type: "optimize",
+        status: "active",
         score: "408",
         metricLabel: "Pending Savings",
         metricValue: "$408/yr",
@@ -102,61 +105,86 @@ export class DatabaseStorage implements IStorage {
 
     // Seed Transactions
     await db.insert(transactions).values([
-      { merchant: "Uber Rides", amount: "24.50", status: "safe", riskScore: 5 },
-      { merchant: "Netflix", amount: "15.99", status: "safe", riskScore: 2 },
-      {
-        merchant: "Unknown Vendor NYC",
-        amount: "1250.00",
-        status: "suspicious",
-        riskScore: 88,
-      },
-      { merchant: "Whole Foods", amount: "84.20", status: "safe", riskScore: 3 },
-      { merchant: "Steam Games", amount: "59.99", status: "safe", riskScore: 12 },
+      { merchantName: "Uber Rides", amount: "24.50", type: "expense", category: "transportation", status: "completed", riskScore: 5, riskFlag: "none" },
+      { merchantName: "Netflix", amount: "15.99", type: "expense", category: "entertainment", status: "completed", riskScore: 2, riskFlag: "none" },
+      { merchantName: "Unknown Vendor NYC", amount: "1250.00", type: "expense", category: "uncategorized", status: "pending", riskScore: 88, riskFlag: "high" },
+      { merchantName: "Whole Foods", amount: "84.20", type: "expense", category: "groceries", status: "completed", riskScore: 3, riskFlag: "none" },
+      { merchantName: "Steam Games", amount: "59.99", type: "expense", category: "entertainment", status: "completed", riskScore: 12, riskFlag: "low" },
     ]);
 
     // Seed Forecasts
     await db.insert(forecasts).values([
       {
+        type: "cashflow",
+        period: "30d",
+        predictedValue: "5000",
         month: "Jan",
         actual: "5000",
         projected: "5000",
         lowerBound: "4900",
         upperBound: "5100",
+        confidenceLow: "4900",
+        confidenceHigh: "5100",
       },
       {
+        type: "cashflow",
+        period: "30d",
+        predictedValue: "5100",
         month: "Feb",
         actual: "5200",
         projected: "5100",
         lowerBound: "5000",
         upperBound: "5300",
+        confidenceLow: "5000",
+        confidenceHigh: "5300",
       },
       {
+        type: "cashflow",
+        period: "30d",
+        predictedValue: "5300",
         month: "Mar",
         actual: "5100",
         projected: "5300",
         lowerBound: "5100",
         upperBound: "5500",
+        confidenceLow: "5100",
+        confidenceHigh: "5500",
       },
       {
+        type: "cashflow",
+        period: "30d",
+        predictedValue: "5500",
         month: "Apr",
         actual: null,
         projected: "5500",
         lowerBound: "5300",
         upperBound: "5800",
+        confidenceLow: "5300",
+        confidenceHigh: "5800",
       },
       {
+        type: "cashflow",
+        period: "30d",
+        predictedValue: "5800",
         month: "May",
         actual: null,
         projected: "5800",
         lowerBound: "5500",
         upperBound: "6100",
+        confidenceLow: "5500",
+        confidenceHigh: "6100",
       },
       {
+        type: "cashflow",
+        period: "30d",
+        predictedValue: "6200",
         month: "Jun",
         actual: null,
         projected: "6200",
         lowerBound: "5800",
         upperBound: "6500",
+        confidenceLow: "5800",
+        confidenceHigh: "6500",
       },
     ]);
 
@@ -185,12 +213,14 @@ export class DatabaseStorage implements IStorage {
     // Seed Alerts
     await db.insert(alerts).values([
       {
+        type: "threshold",
         title: "Subscription Price Hike",
         message: "Netflix increased by $2/mo",
         severity: "medium",
         read: false,
       },
       {
+        type: "anomaly",
         title: "Large Transaction Detected",
         message: "$1,250 at Unknown Vendor NYC",
         severity: "high",

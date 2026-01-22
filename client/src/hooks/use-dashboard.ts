@@ -1,53 +1,41 @@
+/**
+ * Dashboard Hooks
+ * React Query hooks for dashboard data fetching and mutations
+ * @see specs/hooks/use-dashboard.spec.ts
+ */
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api, buildUrl, DashboardResponse } from "@shared/routes";
-import type { Action } from "@shared/schema";
+import { api, buildUrl, DashboardResponse, ActionResponse } from "@shared/routes";
 
 // =============================================================================
-// MOCK DATA - Used when backend is unavailable (frontend-only development)
+// MOCK DATA GENERATORS - Used when backend is unavailable (frontend-only dev)
 // =============================================================================
 
-const merchants = [
-  { name: "Amazon", safe: true },
-  { name: "Spotify", safe: true },
-  { name: "Netflix", safe: true },
-  { name: "Uber Eats", safe: true },
-  { name: "Apple Store", safe: true },
-  { name: "Starbucks", safe: true },
-  { name: "Gas Station", safe: true },
-  { name: "Target", safe: true },
-  { name: "Walmart", safe: true },
-  { name: "Costco", safe: true },
-  { name: "Whole Foods", safe: true },
-  { name: "Home Depot", safe: true },
-  { name: "Best Buy", safe: true },
-  { name: "Walgreens", safe: true },
-  { name: "CVS Pharmacy", safe: true },
-  { name: "McDonald's", safe: true },
-  { name: "Chipotle", safe: true },
-  { name: "Gym Membership", safe: true },
-  { name: "Electric Bill", safe: true },
-  { name: "Phone Bill", safe: true },
-  { name: "Internet Bill", safe: true },
-  { name: "Water Bill", safe: true },
-  { name: "Insurance Payment", safe: true },
-  { name: "Gas Bill", safe: true },
-  { name: "Grocery Store", safe: true },
-  { name: "Restaurant - Downtown", safe: true },
-  { name: "Coffee Shop", safe: true },
-  { name: "Bookstore", safe: true },
-  { name: "Movie Theater", safe: true },
-  { name: "Parking Garage", safe: true },
-  { name: "Unknown Vendor", safe: false },
-  { name: "Foreign Transaction - Nigeria", safe: false },
-  { name: "Suspicious ATM Withdrawal", safe: false },
-  { name: "Online Casino", safe: false },
-  { name: "Crypto Exchange", safe: false },
-  { name: "Unusual Wire Transfer", safe: false },
-  { name: "Overseas Purchase - Russia", safe: false },
-  { name: "Night Club - 3AM", safe: false },
-  { name: "Pawn Shop", safe: false },
-  { name: "Unknown Online Store", safe: false },
-];
+const MERCHANT_DATA = {
+  safe: [
+    "Amazon", "Spotify", "Netflix", "Uber Eats", "Apple Store",
+    "Starbucks", "Gas Station", "Target", "Walmart", "Costco",
+    "Whole Foods", "Home Depot", "Best Buy", "Walgreens", "CVS Pharmacy",
+    "McDonald's", "Chipotle", "Gym Membership", "Electric Bill", "Phone Bill",
+    "Internet Bill", "Water Bill", "Insurance Payment", "Gas Bill", "Grocery Store",
+    "Restaurant - Downtown", "Coffee Shop", "Bookstore", "Movie Theater", "Parking Garage",
+  ],
+  suspicious: [
+    "Unknown Vendor", "Foreign Transaction - Nigeria", "Suspicious ATM Withdrawal",
+    "Online Casino", "Crypto Exchange", "Unusual Wire Transfer",
+    "Overseas Purchase - Russia", "Night Club - 3AM", "Pawn Shop", "Unknown Online Store",
+  ],
+};
+
+type RiskFlag = 'none' | 'low' | 'medium' | 'high' | 'critical';
+
+function getRiskFlag(riskScore: number): RiskFlag {
+  if (riskScore <= 10) return 'none';
+  if (riskScore <= 30) return 'low';
+  if (riskScore <= 60) return 'medium';
+  if (riskScore <= 80) return 'high';
+  return 'critical';
+}
 
 function generateMockTransactions() {
   const transactions = [];
@@ -55,34 +43,44 @@ function generateMockTransactions() {
   const dayMs = 86400000;
 
   for (let i = 1; i <= 100; i++) {
-    const merchant = merchants[Math.floor(Math.random() * merchants.length)];
-    const isSuspicious = !merchant.safe;
+    const isSuspicious = Math.random() < 0.15; // 15% suspicious rate
+    const merchantList = isSuspicious ? MERCHANT_DATA.suspicious : MERCHANT_DATA.safe;
+    const merchant = merchantList[Math.floor(Math.random() * merchantList.length)];
+
     const amount = isSuspicious
       ? (Math.random() * 2000 + 100).toFixed(2)
       : (Math.random() * 300 + 5).toFixed(2);
+
     const riskScore = isSuspicious
       ? Math.floor(Math.random() * 30 + 70)
       : Math.floor(Math.random() * 20 + 1);
+
     const daysAgo = Math.floor(Math.random() * 30);
 
     transactions.push({
       id: i,
-      merchant: merchant.name,
+      merchant,
       amount,
       date: new Date(now - dayMs * daysAgo),
       status: isSuspicious ? "suspicious" : "safe",
       riskScore,
+      riskFlag: getRiskFlag(riskScore),
     });
   }
 
   return transactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 }
 
+// =============================================================================
+// MOCK DASHBOARD DATA
+// =============================================================================
+
 const mockDashboardData: DashboardResponse = {
   engines: [
     {
       id: 1,
       name: "Protect",
+      type: "protect",
       status: "active",
       score: "0.02",
       metricLabel: "Threat Score",
@@ -93,6 +91,7 @@ const mockDashboardData: DashboardResponse = {
     {
       id: 2,
       name: "Grow",
+      type: "grow",
       status: "active",
       score: "98.4",
       metricLabel: "Accuracy",
@@ -103,6 +102,7 @@ const mockDashboardData: DashboardResponse = {
     {
       id: 3,
       name: "Optimize",
+      type: "optimize",
       status: "optimizing",
       score: "408",
       metricLabel: "Pending Savings",
@@ -121,13 +121,48 @@ const mockDashboardData: DashboardResponse = {
     { id: 6, month: "Jun", actual: null, projected: "57200", lowerBound: "54200", upperBound: "60200" },
   ],
   pendingActions: [
-    { id: 1, type: "subscription_cancel", description: "Cancel unused Hulu subscription", amount: "17.99", status: "pending", date: new Date() },
-    { id: 2, type: "fund_transfer", description: "Move $500 to high-yield savings", amount: "500.00", status: "pending", date: new Date() },
-    { id: 3, type: "subscription_cancel", description: "Downgrade cloud storage plan", amount: "5.00", status: "pending", date: new Date() },
+    {
+      id: 1,
+      type: "subscription_cancel",
+      description: "Cancel unused Hulu subscription",
+      amount: "17.99",
+      status: "pending",
+      date: new Date(),
+    },
+    {
+      id: 2,
+      type: "fund_transfer",
+      description: "Move $500 to high-yield savings",
+      amount: "500.00",
+      status: "pending",
+      date: new Date(),
+    },
+    {
+      id: 3,
+      type: "subscription_cancel",
+      description: "Downgrade cloud storage plan",
+      amount: "5.00",
+      status: "pending",
+      date: new Date(),
+    },
   ],
   alerts: [
-    { id: 1, title: "Unusual Login Attempt", message: "New login detected from San Francisco, CA. If this wasn't you, please review your account security.", severity: "medium", read: false, timestamp: new Date() },
-    { id: 2, title: "Large Transaction Flagged", message: "$299.00 charge from Unknown Vendor requires your review.", severity: "high", read: false, timestamp: new Date() },
+    {
+      id: 1,
+      title: "Unusual Login Attempt",
+      message: "New login detected from San Francisco, CA. If this wasn't you, please review your account security.",
+      severity: "medium",
+      read: false,
+      timestamp: new Date(),
+    },
+    {
+      id: 2,
+      title: "Large Transaction Flagged",
+      message: "$299.00 charge from Unknown Vendor requires your review.",
+      severity: "high",
+      read: false,
+      timestamp: new Date(),
+    },
   ],
 };
 
@@ -138,6 +173,7 @@ const mockDashboardData: DashboardResponse = {
 /**
  * GET /api/dashboard - Fetches aggregated dashboard data
  * Falls back to mock data when backend is unavailable
+ * @see specs/hooks/use-dashboard.spec.ts
  */
 export function useDashboardData() {
   return useQuery({
@@ -178,7 +214,7 @@ export function useExecuteAction() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (id: number): Promise<Action> => {
+    mutationFn: async (id: number): Promise<ActionResponse> => {
       const url = buildUrl(api.actions.execute.path, { id });
 
       try {
@@ -206,7 +242,7 @@ export function useExecuteAction() {
         }
 
         // Return the action with updated status
-        return { ...action, status: "executed" } as Action;
+        return { ...action, status: "executed" };
       }
     },
 
@@ -241,4 +277,65 @@ export function useExecuteAction() {
       queryClient.invalidateQueries({ queryKey: [api.dashboard.get.path] });
     },
   });
+}
+
+/**
+ * Hook for approving/rejecting optimizations
+ * @see specs/hooks/use-optimizations.spec.ts
+ */
+export function useOptimizationActions() {
+  const queryClient = useQueryClient();
+
+  const approve = useMutation({
+    mutationFn: async (id: string) => {
+      console.info(`Approving optimization ${id}`);
+      // In a real app, this would call the API
+      return { id, status: "approved" };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.dashboard.get.path] });
+    },
+  });
+
+  const reject = useMutation({
+    mutationFn: async (id: string) => {
+      console.info(`Rejecting optimization ${id}`);
+      return { id, status: "rejected" };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.dashboard.get.path] });
+    },
+  });
+
+  return { approve, reject };
+}
+
+/**
+ * Hook for acknowledging/dismissing alerts
+ * @see specs/hooks/use-alerts.spec.ts
+ */
+export function useAlertActions() {
+  const queryClient = useQueryClient();
+
+  const acknowledge = useMutation({
+    mutationFn: async (id: string) => {
+      console.info(`Acknowledging alert ${id}`);
+      return { id, acknowledged: true };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.dashboard.get.path] });
+    },
+  });
+
+  const dismiss = useMutation({
+    mutationFn: async (id: string) => {
+      console.info(`Dismissing alert ${id}`);
+      return { id, dismissed: true };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.dashboard.get.path] });
+    },
+  });
+
+  return { acknowledge, dismiss };
 }

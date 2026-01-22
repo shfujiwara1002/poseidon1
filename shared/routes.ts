@@ -1,5 +1,10 @@
+/**
+ * API Routes and Contracts
+ * Type-safe API definitions with Zod validation
+ * @see specs/routes/api-contracts.spec.ts
+ */
+
 import { z } from "zod";
-import { engines, transactions, forecasts, actions, alerts } from "./schema";
 
 // =============================================================================
 // ERROR SCHEMAS
@@ -19,6 +24,73 @@ export const errorSchemas = {
 };
 
 // =============================================================================
+// SIMPLIFIED RESPONSE SCHEMAS (for frontend use)
+// =============================================================================
+
+// Engine - simplified for dashboard display
+const EngineResponseSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  type: z.string().optional(),
+  status: z.string(),
+  score: z.string().nullable().optional(),
+  metricLabel: z.string(),
+  metricValue: z.string(),
+  details: z.string(),
+  lastUpdated: z.coerce.date().nullable().optional(),
+});
+
+// Transaction - simplified for transaction list
+const TransactionResponseSchema = z.object({
+  id: z.number(),
+  merchant: z.string(),
+  amount: z.string(),
+  date: z.coerce.date().nullable().optional(),
+  status: z.string(),
+  riskScore: z.number(),
+  riskFlag: z.string().optional(),
+});
+
+// Forecast - simplified for chart display
+const ForecastResponseSchema = z.object({
+  id: z.number(),
+  month: z.string(),
+  actual: z.string().nullable(),
+  projected: z.string(),
+  lowerBound: z.string(),
+  upperBound: z.string(),
+});
+
+// Action - simplified for pending actions list
+const ActionResponseSchema = z.object({
+  id: z.number(),
+  type: z.string(),
+  description: z.string(),
+  amount: z.string().nullable().optional(),
+  status: z.string(),
+  date: z.coerce.date().nullable().optional(),
+});
+
+// Alert - simplified for alerts list
+const AlertResponseSchema = z.object({
+  id: z.number(),
+  title: z.string(),
+  message: z.string(),
+  severity: z.string(),
+  read: z.boolean(),
+  timestamp: z.coerce.date().nullable().optional(),
+});
+
+// Dashboard aggregate response
+const DashboardResponseSchema = z.object({
+  engines: z.array(EngineResponseSchema),
+  recentTransactions: z.array(TransactionResponseSchema),
+  forecasts: z.array(ForecastResponseSchema),
+  pendingActions: z.array(ActionResponseSchema),
+  alerts: z.array(AlertResponseSchema),
+});
+
+// =============================================================================
 // API CONTRACT DEFINITIONS
 // =============================================================================
 
@@ -28,13 +100,7 @@ export const api = {
       method: "GET" as const,
       path: "/api/dashboard",
       responses: {
-        200: z.object({
-          engines: z.array(z.custom<typeof engines.$inferSelect>()),
-          recentTransactions: z.array(z.custom<typeof transactions.$inferSelect>()),
-          forecasts: z.array(z.custom<typeof forecasts.$inferSelect>()),
-          pendingActions: z.array(z.custom<typeof actions.$inferSelect>()),
-          alerts: z.array(z.custom<typeof alerts.$inferSelect>()),
-        }),
+        200: DashboardResponseSchema,
       },
     },
   },
@@ -43,14 +109,14 @@ export const api = {
       method: "GET" as const,
       path: "/api/engines",
       responses: {
-        200: z.array(z.custom<typeof engines.$inferSelect>()),
+        200: z.array(EngineResponseSchema),
       },
     },
     get: {
       method: "GET" as const,
       path: "/api/engines/:id",
       responses: {
-        200: z.custom<typeof engines.$inferSelect>(),
+        200: EngineResponseSchema,
         404: errorSchemas.notFound,
       },
     },
@@ -60,7 +126,7 @@ export const api = {
       method: "POST" as const,
       path: "/api/actions/:id/execute",
       responses: {
-        200: z.custom<typeof actions.$inferSelect>(),
+        200: ActionResponseSchema,
         404: errorSchemas.notFound,
       },
     },
@@ -93,7 +159,10 @@ export function buildUrl(
 // TYPE EXPORTS
 // =============================================================================
 
-export type DashboardResponse = z.infer<typeof api.dashboard.get.responses[200]>;
-export type EnginesResponse = z.infer<typeof api.engines.list.responses[200]>;
-export type EngineResponse = z.infer<typeof api.engines.get.responses[200]>;
-export type ActionResponse = z.infer<typeof api.actions.execute.responses[200]>;
+export type DashboardResponse = z.infer<typeof DashboardResponseSchema>;
+export type EngineResponse = z.infer<typeof EngineResponseSchema>;
+export type TransactionResponse = z.infer<typeof TransactionResponseSchema>;
+export type ForecastResponse = z.infer<typeof ForecastResponseSchema>;
+export type ActionResponse = z.infer<typeof ActionResponseSchema>;
+export type AlertResponse = z.infer<typeof AlertResponseSchema>;
+export type EnginesResponse = EngineResponse[];

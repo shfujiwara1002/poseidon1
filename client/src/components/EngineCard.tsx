@@ -1,51 +1,73 @@
+/**
+ * EngineCard Component
+ * Displays engine status with metrics
+ * @see specs/components/dashboard/engine-card.spec.ts
+ */
+
 import { Shield, TrendingUp, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { Engine } from "@shared/schema";
+import type { EngineResponse } from "@shared/routes";
 import { motion } from "framer-motion";
+import { colors } from "@/tokens/colors";
+
+type EngineType = 'protect' | 'grow' | 'optimize';
 
 interface EngineCardProps {
-  engine: Engine;
+  engine: EngineResponse;
   variant?: "dashboard" | "landing";
 }
 
-const engineConfig = {
+const engineConfig: Record<string, {
+  type: EngineType;
+  icon: typeof Shield;
+  glow: string;
+  border: string;
+  text: string;
+  bg: string;
+  gradient: string;
+  accentGradient: string;
+}> = {
   Protect: {
-    color: "cyan",
+    type: 'protect',
     icon: Shield,
-    glow: "shadow-cyan-500/20",
-    border: "hover:border-cyan-500/50",
-    text: "text-cyan-400",
-    bg: "bg-cyan-500/10",
-    gradient: "from-cyan-500/20 to-transparent",
-  },
-  Grow: {
-    color: "blue",
-    icon: TrendingUp,
     glow: "shadow-blue-500/20",
     border: "hover:border-blue-500/50",
     text: "text-blue-400",
     bg: "bg-blue-500/10",
     gradient: "from-blue-500/20 to-transparent",
+    accentGradient: colors.gradients.protect,
+  },
+  Grow: {
+    type: 'grow',
+    icon: TrendingUp,
+    glow: "shadow-green-500/20",
+    border: "hover:border-green-500/50",
+    text: "text-green-400",
+    bg: "bg-green-500/10",
+    gradient: "from-green-500/20 to-transparent",
+    accentGradient: colors.gradients.grow,
   },
   Optimize: {
-    color: "purple",
+    type: 'optimize',
     icon: Zap,
     glow: "shadow-purple-500/20",
     border: "hover:border-purple-500/50",
     text: "text-purple-400",
     bg: "bg-purple-500/10",
     gradient: "from-purple-500/20 to-transparent",
+    accentGradient: colors.gradients.optimize,
   },
-} as const;
+};
 
 const defaultConfig = {
-  color: "slate",
+  type: 'protect' as EngineType,
   icon: Shield,
   glow: "shadow-slate-500/20",
   border: "hover:border-slate-500/50",
   text: "text-slate-400",
   bg: "bg-slate-500/10",
   gradient: "from-slate-500/20 to-transparent",
+  accentGradient: colors.gradients.primary,
 };
 
 export function EngineCard({ engine, variant = "dashboard" }: EngineCardProps) {
@@ -93,46 +115,54 @@ export function EngineCard({ engine, variant = "dashboard" }: EngineCardProps) {
   return (
     <div
       className={cn(
-        "glass-card p-6 rounded-2xl relative overflow-hidden group transition-all duration-300",
+        "glass-card rounded-2xl relative overflow-hidden group transition-all duration-300",
         "hover:border-white/20"
       )}
     >
+      {/* Engine accent bar */}
       <div
-        className={cn(
-          "absolute top-0 right-0 p-32 opacity-10 blur-3xl rounded-full -translate-y-1/2 translate-x-1/2",
-          `bg-${config.color}-500`
-        )}
+        className="h-1 w-full"
+        style={{ background: config.accentGradient }}
       />
 
-      <div className="relative z-10 flex justify-between items-start mb-6">
-        <div className="flex items-center gap-3">
-          <div className={cn("p-2 rounded-lg", config.bg, config.text)}>
-            <Icon size={20} />
+      <div className="p-6">
+        <div
+          className={cn(
+            "absolute top-0 right-0 p-32 opacity-10 blur-3xl rounded-full -translate-y-1/2 translate-x-1/2",
+            config.bg
+          )}
+        />
+
+        <div className="relative z-10 flex justify-between items-start mb-6">
+          <div className="flex items-center gap-3">
+            <div className={cn("p-2 rounded-lg", config.bg, config.text)}>
+              <Icon size={20} />
+            </div>
+            <div>
+              <h3 className="font-bold text-lg text-white">{engine.name}</h3>
+              <span
+                className={cn(
+                  "text-xs font-mono uppercase tracking-wider",
+                  config.text
+                )}
+              >
+                {engine.status}
+              </span>
+            </div>
           </div>
-          <div>
-            <h3 className="font-bold text-lg text-white">{engine.name}</h3>
-            <span
-              className={cn(
-                "text-xs font-mono uppercase tracking-wider",
-                config.text
-              )}
-            >
-              {engine.status}
+        </div>
+
+        <div className="relative z-10">
+          <div className="flex items-baseline gap-2 mb-1">
+            <span className="text-3xl font-display font-bold text-white">
+              {engine.metricValue}
             </span>
           </div>
-        </div>
-      </div>
+          <p className="text-sm text-slate-400">{engine.metricLabel}</p>
 
-      <div className="relative z-10">
-        <div className="flex items-baseline gap-2 mb-1">
-          <span className="text-3xl font-display font-bold text-white">
-            {engine.metricValue}
-          </span>
-        </div>
-        <p className="text-sm text-slate-400">{engine.metricLabel}</p>
-
-        <div className="mt-4 pt-4 border-t border-white/5 flex items-center justify-between text-xs text-slate-500">
-          <span>{engine.details}</span>
+          <div className="mt-4 pt-4 border-t border-white/5 flex items-center justify-between text-xs text-slate-500">
+            <span>{engine.details}</span>
+          </div>
         </div>
       </div>
     </div>

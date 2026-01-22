@@ -24,7 +24,7 @@ function SidebarContent() {
       <div className="p-6">
         {/* Logo */}
         <div className="flex items-center justify-center mb-8">
-          <img src={logoImage} alt="FIS.ai" className="w-full max-w-[200px]" />
+          <img src={logoImage} alt="Poseidon.AI" className="w-full max-w-[200px]" />
         </div>
 
         {/* Navigation */}

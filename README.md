@@ -1,4 +1,4 @@
-# Poseidon1 (FIS.ai)
+# Poseidon.AI
 
 A financial intelligence dashboard with three AI engines: **Protect** (fraud detection), **Grow** (forecasting), and **Optimize** (automated actions).
 

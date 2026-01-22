@@ -2,17 +2,18 @@ import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { ArrowRight, ChevronRight } from "lucide-react";
 import { EngineCard } from "@/components/EngineCard";
-import type { Engine } from "@shared/schema";
+import type { EngineResponse } from "@shared/routes";
 import logoImage from "@/assets/logo.png";
 
 // =============================================================================
 // LANDING PAGE DATA
 // =============================================================================
 
-const landingEngines: Engine[] = [
+const landingEngines: EngineResponse[] = [
   {
     id: 1,
     name: "Protect",
+    type: "protect",
     status: "Active",
     metricLabel: "Threat Score",
     metricValue: "0.02%",
@@ -23,6 +24,7 @@ const landingEngines: Engine[] = [
   {
     id: 2,
     name: "Grow",
+    type: "grow",
     status: "Active",
     metricLabel: "Accuracy",
     metricValue: "98.4%",
@@ -33,6 +35,7 @@ const landingEngines: Engine[] = [
   {
     id: 3,
     name: "Optimize",
+    type: "optimize",
     status: "Active",
     metricLabel: "Pending Savings",
     metricValue: "$408/yr",
@@ -65,7 +68,7 @@ export default function Home() {
       {/* Navigation */}
       <nav className="relative z-10 max-w-7xl mx-auto px-6 py-6 flex justify-between items-center">
         <div className="flex items-center">
-          <img src={logoImage} alt="FIS.ai" className="h-10" />
+          <img src={logoImage} alt="Poseidon.AI" className="h-10" />
         </div>
         <div className="flex gap-6">
           <Link
