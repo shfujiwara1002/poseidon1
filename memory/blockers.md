@@ -1,6 +1,6 @@
 # Known Blockers & Workarounds
 
-> Last updated: 2025-01-21
+> Last updated: 2025-01-22
 
 ## Active Blockers
 
@@ -9,6 +9,26 @@ Currently no active blockers.
 ---
 
 ## Resolved Blockers
+
+### TypeScript errors in storage.ts
+**Status**: Resolved
+**Date Identified**: 2025-01-22
+**Date Resolved**: 2025-01-22
+**Impact**: Build failed, couldn't deploy
+**Root Cause**: Schema expanded with new required fields (type, category, period) but seed data wasn't updated
+**Fix**: Updated seed data in storage.ts to include all required fields:
+- Engines: Added `type` field ('protect', 'grow', 'optimize')
+- Transactions: Added `type`, `category`, `merchantName`, `riskFlag` fields
+- Forecasts: Added `type`, `period`, `predictedValue`, `confidenceLow/High` fields
+- Alerts: Added `type` field ('threshold', 'anomaly', 'fraud', etc.)
+
+### Type mismatch in use-dashboard.ts
+**Status**: Resolved
+**Date Identified**: 2025-01-22
+**Date Resolved**: 2025-01-22
+**Impact**: TypeScript error on line 232
+**Root Cause**: Function returned `Action` (full schema type) but API returns `ActionResponse` (simplified)
+**Fix**: Changed import from `Action` to `ActionResponse` from `@shared/routes`
 
 ### Database not available for frontend development
 **Status**: Resolved
@@ -23,19 +43,30 @@ Currently no active blockers.
 
 ## Potential Issues
 
-### Mock data drift
+### Component implementation gap
 **Risk**: Medium
-**Description**: Mock data may become inconsistent with real schema as development progresses
+**Description**: 16 of 32 specified components not yet implemented
+**Impact**: Some UI features incomplete
 **Mitigation**:
-- Keep mock data in sync when updating `shared/schema.ts`
-- Add validation tests comparing mock structure to Zod schemas
+- Prioritize ExecuteModal (needed for action execution)
+- Prioritize ForecastChart (core Grow visualization)
+- Track progress in current-sprint.md
 
-### No authentication in mock mode
+### Feature specs incomplete
 **Risk**: Low
-**Description**: Frontend-only mode bypasses authentication
+**Description**: docs/specs/{protect,grow,optimize}-engine.md are placeholder-level
+**Impact**: Developers may lack detailed requirements
 **Mitigation**:
-- Only use for development
-- Always test with full stack before deployment
+- Expand specs as components are implemented
+- Use component specs as source of truth for now
+
+### No test coverage
+**Risk**: Medium
+**Description**: No unit or integration tests
+**Impact**: Regressions possible
+**Mitigation**:
+- Add tests incrementally
+- Focus on critical paths first (action execution, data fetching)
 
 ---
 

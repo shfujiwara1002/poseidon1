@@ -11,3 +11,4 @@ export { PendingOptimizationsList } from './PendingOptimizationsList';
 export { SavingsCapturedMetric } from './SavingsCapturedMetric';
 export { AutomationLogEntry } from './AutomationLogEntry';
 export { AutomationLog } from './AutomationLog';
+export { ExecuteModal } from './ExecuteModal';
