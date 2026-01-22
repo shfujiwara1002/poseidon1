@@ -8,6 +8,8 @@
     "build": "tsx script/build.ts",
     "start": "NODE_ENV=production node dist/index.cjs",
     "check": "tsc",
+    "validate:schemas": "tsx scripts/validate-schemas.ts",
+    "validate:all": "npm run check && npm run validate:schemas",
     "db:push": "drizzle-kit push"
   },
   "dependencies": {

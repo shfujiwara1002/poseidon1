@@ -8,12 +8,41 @@ Complete Phase 4 (Component Implementation) and prepare for MIT CTO Program Caps
 ## SDD Phase Status
 | Phase | Description | Status |
 |-------|-------------|--------|
-| Phase 0 | CLAUDE.md Governance | Complete |
+| Phase 0 | CLAUDE.md Governance | **Enhanced** ✓ |
 | Phase 1 | Domain Specifications (Zod) | Complete |
 | Phase 2 | Component Specifications | Complete |
 | Phase 3 | Mock Data Generation | Complete |
 | Phase 4 | Component Implementation | **In Progress (50%)** |
 | Phase 5 | Composition and Polish | Pending |
+
+## Framework Enhancements (NEW)
+
+### Skills (`.claude/skills/`)
+| Skill | Purpose | Status |
+|-------|---------|--------|
+| `sdd-implementation` | Component implementation guidelines | ✅ Created |
+| `protect-engine` | Protect domain knowledge | ✅ Created |
+| `grow-engine` | Grow domain knowledge | ✅ Created |
+| `optimize-engine` | Optimize domain knowledge | ✅ Created |
+
+### Subagents (`.claude/agents/`)
+| Agent | Purpose | Status |
+|-------|---------|--------|
+| `spec-reviewer` | Check implementations against specs | ✅ Created |
+| `type-checker` | TypeScript checks with fix suggestions | ✅ Created |
+| `codebase-explorer` | Investigate codebase without changes | ✅ Created |
+
+### Hooks (`.claude/settings.local.json`)
+| Hook | Trigger | Status |
+|------|---------|--------|
+| TypeScript check | After .ts/.tsx edits | ✅ Configured |
+| Build verification | Before commits | ✅ Configured |
+
+### Validation Scripts
+| Script | Purpose | Status |
+|--------|---------|--------|
+| `npm run validate:schemas` | Validate mock data against Zod | ✅ Created |
+| `npm run validate:all` | Full validation suite | ✅ Created |
 
 ## Component Implementation Progress
 
@@ -63,6 +92,15 @@ Complete Phase 4 (Component Implementation) and prepare for MIT CTO Program Caps
 
 ## Completed This Sprint
 
+### Framework Enhancements
+- [x] Created 4 skills for on-demand domain knowledge
+- [x] Created 3 subagents for isolated task execution
+- [x] Added hooks for automated TypeScript verification
+- [x] Refactored CLAUDE.md (287 → 157 lines)
+- [x] Added validation scripts
+- [x] Added context management guidance
+- [x] Added Plan Mode documentation
+
 ### Phase 4: Component Implementation (Partial)
 - [x] Protect: RiskScoreCard, AlertsList, AlertCard, AlertSeverityBadge, RiskBadge
 - [x] Grow: GoalProgressCard, TrendIndicator, ForecastSummaryCard
@@ -76,11 +114,6 @@ Complete Phase 4 (Component Implementation) and prepare for MIT CTO Program Caps
 - [x] Added Railway deployment configuration
 - [x] Comprehensive README update
 - [x] All TypeScript errors resolved
-
-### Design Tokens
-- [x] Color system with engine identity
-- [x] Spacing and typography tokens
-- [x] Engine gradient definitions
 
 ## Next Up (Priority Order)
 
@@ -114,6 +147,9 @@ Complete Phase 4 (Component Implementation) and prepare for MIT CTO Program Caps
 | Components implemented | 32 | 16 | 50% |
 | TypeScript errors | 0 | 0 | Complete |
 | Build passes | Yes | Yes | Complete |
+| Skills created | 4 | 4 | Complete |
+| Subagents created | 3 | 3 | Complete |
+| Hooks configured | 2 | 2 | Complete |
 
 ## Notes
 - App runs locally with `npx vite --host` at http://localhost:5173
@@ -121,3 +157,5 @@ Complete Phase 4 (Component Implementation) and prepare for MIT CTO Program Caps
 - All mock data validates against Zod schemas
 - Implementation must use types from `@shared/routes` (not schema)
 - Components must stay under 150 lines per CLAUDE.md rules
+- **NEW**: Use skills and subagents for enhanced development workflow
+- **NEW**: Hooks auto-run TypeScript checks after edits
