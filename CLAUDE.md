@@ -28,7 +28,7 @@ Three-engine architecture: **Protect** (fraud detection), **Grow** (forecasting)
 ### Phase Model
 
 ```
-Phase 0: CLAUDE.md Setup (Governance)        ← You are here
+Phase 0: CLAUDE.md Setup (Governance)
     ↓
 Phase 1: Domain Specification (Zod Schemas)
     ↓
@@ -51,7 +51,56 @@ Phase 5: Composition and Polish
 6. After generating: "Validate this against the spec"
 7. If no spec exists: "Generate the spec first, then await approval"
 
-### Memory System
+---
+
+## Automatic Reflection Protocol
+
+**CRITICAL**: Claude MUST automatically perform these checks during development. Do not wait for user to request them.
+
+### On Session Start
+1. Read `memory/context.md` for handoff notes
+2. Read `memory/current-sprint.md` for task status
+3. Read `memory/blockers.md` for known issues
+4. Report current phase and progress to user
+
+### During Development (Every 3-5 Significant Changes)
+1. **Type Check**: Run `npm run check` after creating/modifying TypeScript files
+2. **Spec Alignment**: Verify new code matches spec definitions in `specs/`
+3. **Token Usage**: Confirm design tokens used (not hardcoded colors/spacing)
+4. **Export Check**: Verify new components are exported from index.ts files
+
+### Before Committing
+1. Run `npm run check` - must pass with 0 errors
+2. Run `npm run build` - must complete successfully
+3. Update `memory/current-sprint.md` with progress
+4. Update `memory/context.md` if significant decisions were made
+
+### On Session End (or Context Compaction Warning)
+1. **Update memory/context.md** with:
+   - What was accomplished
+   - Key decisions made
+   - Handoff notes for next session
+2. **Update memory/current-sprint.md** with:
+   - Task completion status
+   - Component implementation progress table
+3. **Update memory/blockers.md** if:
+   - New issues discovered
+   - Issues resolved (move to Resolved section)
+4. Commit all changes with descriptive message
+
+### Reflection Triggers (Auto-execute)
+
+| Trigger | Action |
+|---------|--------|
+| New component created | Verify export in index.ts, check spec exists |
+| Schema modified | Check storage.ts seed data alignment |
+| Type error encountered | Document in blockers.md if not immediately fixed |
+| Build failure | Document root cause, fix, then update blockers.md |
+| Session >50% context used | Update all memory files preemptively |
+
+---
+
+## Memory System
 
 **Long-term Memory** (persistent across sessions):
 - `specs/domain/*.spec.ts` - Zod schemas (source of truth)
@@ -65,9 +114,39 @@ Phase 5: Composition and Polish
 - `memory/context.md` - Session handoff notes and recent decisions
 - `memory/blockers.md` - Known issues and workarounds
 
-### Custom Commands
+### Memory Update Frequency
 
-- `/spec [feature-name]` - Generate or update a feature specification
+| File | Update When |
+|------|-------------|
+| `context.md` | Every session, on significant decisions |
+| `current-sprint.md` | When tasks complete, progress changes |
+| `blockers.md` | When issues found or resolved |
+
+---
+
+## Implementation Checklist (Auto-verify)
+
+When implementing a new component, Claude MUST:
+
+```
+□ Check spec exists in specs/components/features/{engine}/
+□ Read the spec before writing any code
+□ Use types from @shared/routes (not @shared/schema for frontend)
+□ Import design tokens from @/tokens
+□ Keep file under 150 lines
+□ Add export to index.ts
+□ Run npm run check after creation
+□ Update memory/current-sprint.md progress table
+```
+
+When modifying shared/schema.ts:
+
+```
+□ Update server/storage.ts seed data
+□ Update shared/routes.ts response schemas if needed
+□ Run npm run check
+□ Document schema changes in memory/context.md
+```
 
 ---
 
@@ -124,12 +203,18 @@ poseidon1/
 - Data fetching inside presentational components
 - Components without prop interface definitions
 - Generating implementations without specs
+- Committing without running `npm run check`
 
 ### Path Aliases
 - `@/*` → `client/src/*`
 - `@shared/*` → `shared/*`
 - `@specs/*` → `specs/*`
 - `@assets/*` → `attached_assets/*`
+
+### Type Import Rules
+- **Frontend components**: Use types from `@shared/routes` (EngineResponse, ActionResponse, etc.)
+- **Backend/Database**: Use types from `@shared/schema` (Engine, Action, etc.)
+- **Never mix**: Schema types have more fields than response types
 
 ---
 
@@ -167,6 +252,31 @@ npx vite          # Run frontend-only dev server (no database required)
 | 3 | "Generate mock factory for [Entity] using faker, validating against schema" | Run validation script |
 | 4 | "Implement [Component] importing props from [spec path]" | Visual review |
 | 5 | "Compose [Page] using [Component list] with [mock fixtures]" | Demo walkthrough |
+
+---
+
+## Quick Reference
+
+### Current Component Status (Update in memory/current-sprint.md)
+
+Track implementation progress with this format:
+```markdown
+| Component | Status | File |
+|-----------|--------|------|
+| ComponentName | Done/Pending | `path/to/file.tsx` or `-` |
+```
+
+### Commit Message Format
+```
+[Type] Brief description
+
+- Detail 1
+- Detail 2
+
+Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
+```
+
+Types: `feat`, `fix`, `refactor`, `docs`, `chore`
 
 ---
 
