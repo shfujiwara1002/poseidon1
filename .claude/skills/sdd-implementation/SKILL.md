@@ -16,9 +16,10 @@ When implementing any component in the Poseidon.AI codebase, follow these steps:
 ## Implementation Rules
 
 ### Type Imports
-- **Frontend components**: Use types from `@shared/routes` (EngineResponse, ActionResponse, etc.)
-- **Backend/Database**: Use types from `@shared/schema` (Engine, Action, etc.)
-- **Never mix**: Schema types have more fields than response types
+> See CLAUDE.md "Type Import Rules" section for authoritative rules.
+
+Quick reference:
+- **Frontend**: `@shared/routes` → **Backend**: `@shared/schema`
 
 ### Design Tokens
 Import from `@/tokens`:

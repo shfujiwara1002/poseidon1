@@ -80,6 +80,9 @@ interface GrowEngineResponse {
 - Responsive sizing
 
 ## Related Files
-- Spec: `specs/components/features/grow/grow-components.spec.ts`
-- Domain: `specs/domain/forecast.spec.ts`, `specs/domain/financial-goal.spec.ts`
-- Implementation: `client/src/components/features/grow/`
+- **Plain English Spec**: `docs/specs/grow-engine.md` (edit this)
+- **Component Specs**: `specs/components/features/grow/` (Claude generates)
+- **Domain Schemas**: `specs/domain/forecast.spec.ts`, `specs/domain/financial-goal.spec.ts`
+- **Implementation**: `client/src/components/features/grow/`
+
+> Run `/sync-spec grow-engine` after editing plain English spec.

@@ -96,6 +96,9 @@ interface OptimizeEngineResponse {
 ```
 
 ## Related Files
-- Spec: `specs/components/features/optimize/optimize-components.spec.ts`
-- Domain: `specs/domain/optimization.spec.ts`
-- Implementation: `client/src/components/features/optimize/`
+- **Plain English Spec**: `docs/specs/optimize-engine.md` (edit this)
+- **Component Specs**: `specs/components/features/optimize/` (Claude generates)
+- **Domain Schema**: `specs/domain/optimization.spec.ts`
+- **Implementation**: `client/src/components/features/optimize/`
+
+> Run `/sync-spec optimize-engine` after editing plain English spec.

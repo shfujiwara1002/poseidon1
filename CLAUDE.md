@@ -32,12 +32,28 @@ npx vite          # Frontend-only dev server (no database required)
 
 ## Core Rules (Always Follow)
 
-### Spec-Driven Development
+### Spec-Driven Development (Two-Layer System)
 > "Specifications are not documentation of code; code is implementation of specifications."
 
-1. **NEVER** implement before spec exists - check `specs/components/features/{engine}/`
-2. **ALL** data shapes require Zod schema in `specs/domain/`
-3. Mock data **MUST** validate against Zod schemas
+**Layer 1: Plain English Specs** (User writes)
+- Location: `docs/specs/[feature-name].md`
+- Template: `docs/specs/_simple-template.md`
+- Purpose: Describe WHAT in plain language
+
+**Layer 2: Technical Specs** (Claude generates)
+- Location: `specs/domain/`, `specs/components/features/`
+- Purpose: Zod schemas defining exact data shapes
+
+**Workflow:**
+1. User writes/edits plain English spec in `docs/specs/`
+2. User runs `/sync-spec [feature-name]`
+3. Claude translates to technical Zod specs
+4. Implementation follows technical specs
+
+**Rules:**
+- **NEVER** implement before spec exists - check `specs/components/features/{engine}/`
+- **ALL** data shapes require Zod schema in `specs/domain/`
+- Mock data **MUST** validate against Zod schemas
 
 ### Type Import Rules (Critical)
 - **Frontend**: Use `@shared/routes` (EngineResponse, ActionResponse, etc.)
@@ -99,19 +115,30 @@ For complex features (multi-file changes), use Plan Mode:
 
 ## Available Extensions
 
+### Skills vs Subagents
+- **Skills**: Domain knowledge that auto-loads during implementation (passive guidance)
+- **Subagents**: Isolated tasks you delegate (active investigation/validation)
+
 ### Skills (Auto-loaded when relevant)
-- `sdd-implementation` - Component implementation guidelines
-- `protect-engine` - Protect domain knowledge
-- `grow-engine` - Grow domain knowledge
-- `optimize-engine` - Optimize domain knowledge
+| Skill | When It Loads | What It Provides |
+|-------|---------------|------------------|
+| `sdd-implementation` | Implementing any component | Rules, checklist, type imports |
+| `protect-engine` | Working on fraud detection | Domain terms, component list, data flow |
+| `grow-engine` | Working on forecasting | Domain terms, component list, data flow |
+| `optimize-engine` | Working on automation | Domain terms, component list, data flow |
 
 ### Subagents (Delegate with isolated context)
-- `spec-reviewer` - Check implementations against specs
-- `type-checker` - Run TypeScript checks with fix suggestions
-- `codebase-explorer` - Investigate codebase without changes
+| Subagent | When To Use | What It Does |
+|----------|-------------|--------------|
+| `spec-reviewer` | After implementation | Validates code matches specs |
+| `type-checker` | After TypeScript errors | Analyzes errors, suggests fixes |
+| `codebase-explorer` | Before implementation | Investigates without changes |
 
 ### Custom Commands
-- `/spec [feature-name]` - Generate or update feature specification
+| Command | Purpose | Details |
+|---------|---------|---------|
+| `/spec [name]` | Create/edit plain English spec | See `.claude/commands/spec.md` |
+| `/sync-spec [name]` | Translate to technical Zod specs | See `.claude/commands/sync-spec.md` |
 
 ---
 
@@ -145,11 +172,33 @@ Types: `feat`, `fix`, `refactor`, `docs`, `chore`
 - **Grow**: Green `#10B981`
 - **Optimize**: Purple `#8B5CF6`
 
-### Key Directories
-- Specs: `specs/domain/`, `specs/components/features/`
-- Implementation: `client/src/components/features/`
-- Design tokens: `client/src/tokens/`
-- Memory: `memory/`
+### Directory Structure
+```
+poseidon1/
+├── docs/specs/              # Layer 1: Plain English specs (YOU edit)
+│   ├── _simple-template.md  # Template for new specs
+│   ├── dashboard.md
+│   ├── protect-engine.md
+│   ├── grow-engine.md
+│   └── optimize-engine.md
+│
+├── specs/                   # Layer 2: Technical Zod specs (Claude generates)
+│   ├── domain/              # Data models (Alert, Forecast, etc.)
+│   ├── components/features/ # Component props by engine
+│   │   ├── protect/
+│   │   ├── grow/
+│   │   └── optimize/
+│   └── pages/               # Page-level specs
+│
+├── client/src/components/   # Implementation (follows specs/)
+│   └── features/
+│       ├── protect/
+│       ├── grow/
+│       └── optimize/
+│
+├── memory/                  # Session continuity
+└── .claude/                 # AI automation (commands, skills, agents)
+```
 
 ### Environment Variables
 - `DATABASE_URL` - PostgreSQL connection (required for backend)

@@ -68,6 +68,9 @@ interface ProtectEngineResponse {
 ```
 
 ## Related Files
-- Spec: `specs/components/features/protect/protect-components.spec.ts`
-- Domain: `specs/domain/alert.spec.ts`
-- Implementation: `client/src/components/features/protect/`
+- **Plain English Spec**: `docs/specs/protect-engine.md` (edit this)
+- **Component Specs**: `specs/components/features/protect/` (Claude generates)
+- **Domain Schema**: `specs/domain/alert.spec.ts`
+- **Implementation**: `client/src/components/features/protect/`
+
+> Run `/sync-spec protect-engine` after editing plain English spec.
