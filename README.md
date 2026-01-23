@@ -158,25 +158,160 @@ Configuration files included: `railway.toml`, `nixpacks.toml`
 | **Validation** | Zod (shared schemas) |
 | **Build** | esbuild, Vite |
 
-## Development
+## Development Guide
 
-### Spec-Driven Development
+### Two Development Workflows
 
-This project follows SDD principles:
+#### Simple Workflow (Quick Changes)
+For small changes, bug fixes, or single-component updates:
+
+```bash
+# Just describe what you want to Claude Code
+"Add a delete button to the alert card"
+"Change the Protect engine badge color"
+"Fix TypeScript error in dashboard.tsx"
+```
+
+Claude will make changes directly without requiring specs.
+
+#### Spec-Driven Workflow (Complex Features)
+For multi-file features, new pages, or complex data flows:
+
+**Step 1: Write Plain English Spec**
+
+Create `docs/specs/[feature-name].md` using the template at `docs/specs/_simple-template.md`:
+
+```markdown
+# Transaction History
+
+Show last 30 days of transactions with:
+- Date, amount, merchant name
+- Risk score badge (high/medium/low)
+- Filter by date range
+- Search by merchant
+
+When user clicks a transaction, show details panel.
+```
+
+**Step 2: Generate Technical Specs**
+
+Run in Claude Code:
+```
+/sync-spec transaction-history
+```
+
+This translates your plain English into Zod schemas in `specs/`.
+
+**Step 3: Implement**
+
+Tell Claude:
+```
+Implement the transaction history feature
+```
+
+Claude follows the generated specs exactly.
+
+---
+
+### Claude Code Commands
+
+| Command | When to Use | What It Does |
+|---------|-------------|--------------|
+| `/spec [feature-name]` | Creating new feature spec | Opens editor for plain English spec |
+| `/sync-spec [feature-name]` | After editing spec | Converts to technical Zod schemas |
+
+---
+
+### Directory Structure (What You Edit)
+
+```
+poseidon1/
+│
+├── docs/specs/              ← YOU write plain English specs here
+│   ├── _simple-template.md  ← Copy this for new specs
+│   ├── dashboard.md
+│   ├── protect-engine.md
+│   ├── grow-engine.md
+│   └── optimize-engine.md
+│
+├── specs/                   ← Claude generates Zod schemas here
+│   ├── domain/              ← Data models (Alert, Forecast, etc.)
+│   └── components/          ← Component props by engine
+│
+├── client/src/
+│   ├── components/features/ ← Claude implements components here
+│   │   ├── protect/         ← Fraud detection components
+│   │   ├── grow/            ← Forecasting components
+│   │   └── optimize/        ← Automation components
+│   ├── pages/               ← Full pages (Dashboard, Transactions)
+│   └── tokens/              ← Design tokens (colors, spacing)
+│
+└── server/
+    ├── routes.ts            ← API endpoints
+    └── storage.ts           ← Database queries
+```
+
+---
+
+### The Three AI Engines
+
+All components belong to one of three engines:
+
+| Engine | Color | Purpose | Example Components |
+|--------|-------|---------|-------------------|
+| **Protect** | Blue `#3B82F6` | Fraud detection | RiskBadge, AlertCard, RiskScoreCard |
+| **Grow** | Green `#10B981` | Forecasting | TrendIndicator, ForecastCard |
+| **Optimize** | Purple `#8B5CF6` | Automation | ActionCard, SavingsBadge |
+
+---
+
+### When to Use Which Workflow?
+
+| Simple Workflow | Spec-Driven Workflow |
+|-----------------|---------------------|
+| Bug fixes | New pages |
+| Small tweaks | Multi-component features |
+| Color/style changes | Complex data flows |
+| Single component edits | New engine capabilities |
+
+---
+
+### Spec-Driven Development Principles
+
+This project follows SDD:
 
 > "Specifications are not documentation of code; code is implementation of specifications."
 
-1. Define domain models in `specs/domain/*.spec.ts`
-2. Implement components following `specs/components/`
-3. Use design tokens from `client/src/tokens/`
+**Two-Layer System:**
+1. **Plain English Specs** (`docs/specs/`) - What you want in human language
+2. **Technical Specs** (`specs/`) - Zod schemas defining exact data shapes
 
-### Adding a New Feature
+**Rules:**
+- All domain models require Zod schema in `specs/domain/`
+- Mock data must validate against Zod schemas
+- Implementation follows technical specs exactly
 
-1. Create spec in `specs/domain/`
-2. Update `shared/schema.ts` with database fields
-3. Add simplified response schema in `shared/routes.ts`
-4. Create feature components in `client/src/components/features/`
-5. Update relevant pages
+---
+
+### Adding a New Feature (Examples)
+
+**Example 1: Small Change**
+```
+You: "Add a new alert type for unusual spending"
+Claude: [Implements directly]
+```
+
+**Example 2: Complex Feature**
+```
+You: /spec transaction-history
+[Write plain English in editor]
+
+You: /sync-spec transaction-history
+[Claude generates Zod schemas]
+
+You: "Implement transaction history page"
+[Claude builds following specs]
+```
 
 ## License
 
