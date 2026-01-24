@@ -1,0 +1,233 @@
+import { db } from "./db";
+import {
+  engines,
+  transactions,
+  forecasts,
+  actions,
+  alerts,
+  type Engine,
+  type Transaction,
+  type Forecast,
+  type Action,
+  type Alert,
+} from "@shared/schema";
+import { eq } from "drizzle-orm";
+
+// =============================================================================
+// STORAGE INTERFACE
+// =============================================================================
+
+export interface IStorage {
+  getEngines(): Promise<Engine[]>;
+  getTransactions(): Promise<Transaction[]>;
+  getForecasts(): Promise<Forecast[]>;
+  getPendingActions(): Promise<Action[]>;
+  getAlerts(): Promise<Alert[]>;
+  executeAction(id: number): Promise<Action | undefined>;
+  seedData(): Promise<void>;
+}
+
+// =============================================================================
+// DATABASE STORAGE IMPLEMENTATION
+// =============================================================================
+
+export class DatabaseStorage implements IStorage {
+  async getEngines(): Promise<Engine[]> {
+    return await db.select().from(engines);
+  }
+
+  async getTransactions(): Promise<Transaction[]> {
+    return await db
+      .select()
+      .from(transactions)
+      .limit(10)
+      .orderBy(transactions.timestamp);
+  }
+
+  async getForecasts(): Promise<Forecast[]> {
+    return await db.select().from(forecasts).orderBy(forecasts.id);
+  }
+
+  async getPendingActions(): Promise<Action[]> {
+    return await db
+      .select()
+      .from(actions)
+      .where(eq(actions.status, "pending"));
+  }
+
+  async getAlerts(): Promise<Alert[]> {
+    return await db.select().from(alerts).orderBy(alerts.timestamp);
+  }
+
+  async executeAction(id: number): Promise<Action | undefined> {
+    const [updated] = await db
+      .update(actions)
+      .set({ status: "executed" })
+      .where(eq(actions.id, id))
+      .returning();
+    return updated;
+  }
+
+  async seedData(): Promise<void> {
+    const existingEngines = await this.getEngines();
+    if (existingEngines.length > 0) return;
+
+    // Seed Engines (Protect, Grow, Optimize)
+    await db.insert(engines).values([
+      {
+        name: "Protect",
+        type: "protect",
+        status: "active",
+        score: "0.02",
+        metricLabel: "Threat Score",
+        metricValue: "0.02%",
+        details: "1,248 transactions scanned",
+      },
+      {
+        name: "Grow",
+        type: "grow",
+        status: "active",
+        score: "98.4",
+        metricLabel: "Accuracy",
+        metricValue: "98.4%",
+        details: "$4,200 projected surplus",
+      },
+      {
+        name: "Optimize",
+        type: "optimize",
+        status: "active",
+        score: "408",
+        metricLabel: "Pending Savings",
+        metricValue: "$408/yr",
+        details: "5 auto-actions pending",
+      },
+    ]);
+
+    // Seed Transactions
+    await db.insert(transactions).values([
+      { merchantName: "Uber Rides", amount: "24.50", type: "expense", category: "transportation", status: "completed", riskScore: 5, riskFlag: "none" },
+      { merchantName: "Netflix", amount: "15.99", type: "expense", category: "entertainment", status: "completed", riskScore: 2, riskFlag: "none" },
+      { merchantName: "Unknown Vendor NYC", amount: "1250.00", type: "expense", category: "uncategorized", status: "pending", riskScore: 88, riskFlag: "high" },
+      { merchantName: "Whole Foods", amount: "84.20", type: "expense", category: "groceries", status: "completed", riskScore: 3, riskFlag: "none" },
+      { merchantName: "Steam Games", amount: "59.99", type: "expense", category: "entertainment", status: "completed", riskScore: 12, riskFlag: "low" },
+    ]);
+
+    // Seed Forecasts
+    await db.insert(forecasts).values([
+      {
+        type: "cashflow",
+        period: "30d",
+        predictedValue: "5000",
+        month: "Jan",
+        actual: "5000",
+        projected: "5000",
+        lowerBound: "4900",
+        upperBound: "5100",
+        confidenceLow: "4900",
+        confidenceHigh: "5100",
+      },
+      {
+        type: "cashflow",
+        period: "30d",
+        predictedValue: "5100",
+        month: "Feb",
+        actual: "5200",
+        projected: "5100",
+        lowerBound: "5000",
+        upperBound: "5300",
+        confidenceLow: "5000",
+        confidenceHigh: "5300",
+      },
+      {
+        type: "cashflow",
+        period: "30d",
+        predictedValue: "5300",
+        month: "Mar",
+        actual: "5100",
+        projected: "5300",
+        lowerBound: "5100",
+        upperBound: "5500",
+        confidenceLow: "5100",
+        confidenceHigh: "5500",
+      },
+      {
+        type: "cashflow",
+        period: "30d",
+        predictedValue: "5500",
+        month: "Apr",
+        actual: null,
+        projected: "5500",
+        lowerBound: "5300",
+        upperBound: "5800",
+        confidenceLow: "5300",
+        confidenceHigh: "5800",
+      },
+      {
+        type: "cashflow",
+        period: "30d",
+        predictedValue: "5800",
+        month: "May",
+        actual: null,
+        projected: "5800",
+        lowerBound: "5500",
+        upperBound: "6100",
+        confidenceLow: "5500",
+        confidenceHigh: "6100",
+      },
+      {
+        type: "cashflow",
+        period: "30d",
+        predictedValue: "6200",
+        month: "Jun",
+        actual: null,
+        projected: "6200",
+        lowerBound: "5800",
+        upperBound: "6500",
+        confidenceLow: "5800",
+        confidenceHigh: "6500",
+      },
+    ]);
+
+    // Seed Actions
+    await db.insert(actions).values([
+      {
+        type: "subscription_cancel",
+        description: "Cancel unused Gym Membership",
+        amount: "45.00",
+        status: "pending",
+      },
+      {
+        type: "fund_transfer",
+        description: "Move excess cash to HYSA",
+        amount: "1200.00",
+        status: "pending",
+      },
+      {
+        type: "negotiation",
+        description: "Negotiate Internet Bill",
+        amount: "15.00",
+        status: "pending",
+      },
+    ]);
+
+    // Seed Alerts
+    await db.insert(alerts).values([
+      {
+        type: "threshold",
+        title: "Subscription Price Hike",
+        message: "Netflix increased by $2/mo",
+        severity: "medium",
+        read: false,
+      },
+      {
+        type: "anomaly",
+        title: "Large Transaction Detected",
+        message: "$1,250 at Unknown Vendor NYC",
+        severity: "high",
+        read: false,
+      },
+    ]);
+  }
+}
+
+export const storage = new DatabaseStorage();
