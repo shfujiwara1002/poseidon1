@@ -1,0 +1,70 @@
+@import "tailwindcss";
+
+:root {
+  /* Colors from design */
+  --accent-blue: #2563EB;
+  --accent-blue-light: #3B82F6;
+  --accent-blue-tint: #2563EB20;
+  --accent-cyan: #06B6D4;
+  --accent-cyan-light: #06B6D435;
+  --accent-indigo: #6366F1;
+  --background: #0A1628;
+  --background-secondary: #0F172A;
+  --border: #334155;
+  --border-subtle: #1E293B;
+  --critical: #DC2626;
+  --critical-light: #EF4444;
+  --critical-tint: #DC262620;
+  --indigo-border: #C7D2FE;
+  --indigo-tint: #EEF2FF;
+  --radius-lg: 16px;
+  --radius-md: 12px;
+  --radius-pill: 100px;
+  --radius-sm: 8px;
+  --success: #059669;
+  --success-light: #10B981;
+  --success-tint: #05966920;
+  --surface: #1E293B;
+  --surface-elevated: #334155;
+  --text-primary: #FFFFFF;
+  --text-secondary: #94A3B8;
+  --text-tertiary: #64748B;
+  --text-dark: #0F172A;
+  --warning: #D97706;
+  --warning-light: #F59E0B;
+  --warning-tint: #D9770620;
+  --indigo: #6366F1;
+  --bg-white: #FFFFFF;
+}
+
+@layer base {
+  html, body {
+    height: 100%;
+  }
+
+  .font-primary {
+    font-family: var(--font-inter), "Inter", sans-serif;
+  }
+
+  .icon-lucide {
+    font-family: "Material Symbols Outlined";
+    font-weight: 100;
+    font-style: normal;
+    font-size: inherit;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-feature-settings: "liga";
+    font-feature-settings: "liga";
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--text-primary);
+}
